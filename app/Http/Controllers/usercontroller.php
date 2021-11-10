@@ -12,6 +12,11 @@ use App\Mail\sendmail;
 class usercontroller extends Controller
 {
     public $mail;
+    /**
+     * sign_up function
+     * sign up get data through postman and chech email already exit or not 
+     * if not exit then check all the add and update the user table
+     */
     function sign_up(Request $req)
     {
         $rules= [
@@ -32,14 +37,16 @@ class usercontroller extends Controller
             $userc->name=$req->input('Name');
             $userc->email=$req->input('Email');
             $mail=$req->input('Email');
-            $userc->password=Hash::make($req->input('Password'));
+            $userc->password=Hash::make($req->input('Password'));   //convert password in hash
             $userc->gender=$req->input('Gender');
+            $data=$req->file('Profile')->store('Profile_pic');  //store profile pic
+            $userc->profile=$data;
             $userc->status=0;
             $userc->token=$token=rand(100,1000);
-            $result=$userc->save();
+            $result=$userc->save();     //database querie
             if($result){
-                $this->sendmail($mail,$token);
-                return response()->json(['Message' => 'Signup Register'],200);
+                $mess=$this->sendmail($mail,$token);    //call send mail function 
+                return response()->json(['Message' => 'Signup Register '. $mess],200);
             }
             else{
                 return response()->json(['Message'=>'Something went wrong..!!!'],400);
@@ -47,6 +54,10 @@ class usercontroller extends Controller
         }
         
     }
+    /**
+     * sendmail function 
+     * send mail with the link of verfiy link 
+     */
     function sendmail($mail,$token)
     {
         $details=[
@@ -54,7 +65,7 @@ class usercontroller extends Controller
             'body'=> 'This Link use for login http://127.0.0.1:8000/api/verfi/email/123/ver/'.$mail.'/'.$token
         ]; 
         Mail::to($mail)->send(new sendmail($details));
-        return "successfully mail send.";
+        return "Mail send.";
     }
 }
 

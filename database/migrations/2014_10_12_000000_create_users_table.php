@@ -22,6 +22,7 @@ class CreateUsersTable extends Migration
             $table->string('gender');
             $table->boolean('status');
             $table->integer('token');
+            $table->string("profile")->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
