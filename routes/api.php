@@ -2,14 +2,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
-//use App\Http\Controllers\SignUpController;
 use App\Http\Controllers\UserController;
-//use App\Http\Controllers\LoginController;
-//use App\Http\Controllers\VerificationController;
-//use App\Http\Controllers\LogoutController;
 use App\Http\Controllers\AddFriendController;
-use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\CommentController;
 /*
@@ -32,6 +26,10 @@ Route::post('Signup',[UserController::class, 'signUp']);
 
 Route::post('login',[UserController::class, 'login']);
 
+Route::post('ForgetPasswordMail',[UserController::class, 'forgetPassword']);
+
+Route::post('ChangePassword',[UserController::class, 'changePassword']);
+
 Route::get('verfi/email/123/ver/{mail}/{token}',[UserController::class, 'Verification']);
 
 
@@ -51,5 +49,11 @@ Route::group(['middleware'=>"checktoken"],function()
 
     Route::post('comment',[CommentController::class, 'comment']);
 
+    Route::post('commentdelete',[CommentController::class, 'commentDelete']);
+
+    Route::post('commentupdate',[CommentController::class, 'commentupdate']);
+
     Route::post('logout',[UserController::class, 'logout']);
+
+    Route::post('userpostscomments', [UserController::class, 'user_details_and_posts_details']);
 });

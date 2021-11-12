@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\AddFriendValidation;
-use Illuminate\Http\Request;
 use App\Models\Friend;
 
 class AddFriendController extends Controller

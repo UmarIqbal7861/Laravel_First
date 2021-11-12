@@ -6,8 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\SignUpValidation;
 use App\Http\Requests\LogInValidation;
+use App\Http\Requests\ForgetValidation;
+use App\Http\Requests\ChangePasswordValidation;
 use App\Models\User;
-use Illuminate\Support\Facades\Validator;
+use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\sendmail;
@@ -85,7 +87,7 @@ class UserController extends Controller
      */
     public function login(LogInValidation $req)
     {
-        $passsword = 0;
+        $password = 0;
         $status = 0;
         $verfi=0;
         $req->validated();
@@ -95,13 +97,13 @@ class UserController extends Controller
         $users = DB::table('users')->where('email', $user->email)->get();
         foreach ($users as $key)
         {
-            $passsword = $key->password;
+            $password = $key->password;
             $status = $key->status;
             $verfi =$key->email_verified_at;
         }
         if(!empty($verfi))
         {
-            if(Hash::check($user->password,$passsword))
+            if(Hash::check($user->password,$password))
             {
                 if($status == 1)
                 {
@@ -127,7 +129,6 @@ class UserController extends Controller
                     DB::table('users')->where('email', $user->email)->update(['status'=> '1']);     //database queries
                     return response(['Message'=>'Now you are logged In','Access_Token'=>$jwt]);     //return response
                 }
-
             }
             else
             {
@@ -162,8 +163,97 @@ class UserController extends Controller
         DB::table('users')->where('remember_token', $req->token)->update(['remember_token'=> null]);    //database querie
         return response(['Message'=>'Logout']);
     }
-    function forgetPassword()
+    /**
+     * 
+     */
+    function forgetPassword(ForgetValidation $req)
     {
+        $req->validated();
+        $mail=$req->email;
 
+        $data = DB::table('users')->where('email', $mail)->get();
+        
+        $num = count($data);
+        
+        if($num>0)
+        {
+            foreach ($data as $key)
+            {
+                $verfi =$key->email_verified_at;
+            }
+            if(!empty($verfi))
+            {
+                $otp=rand(1000,9999);
+                DB::table('users')->where('email', $mail)->update(['token'=> $otp]);
+                return response($this->sendMailForgetPassword($mail,$otp));
+            }
+            else{
+                return response(['Message'=>'User not Exists']);
+            }
+        }
+        else{
+            return response(['Message'=>'User not Exists']);
+        }
+    }
+    /**
+     * sendmail function 
+     * send mail with the link of for forget the password 
+     */
+    function sendMailForgetPassword($mail,$otp)
+    {
+        $details=[
+            'title'=> 'Forget Password Verification',
+            'body'=> 'Your OTP is '. $otp . ' Please copy and paste the change Password Api'
+        ]; 
+        Mail::to($mail)->send(new sendmail($details));
+        return "Mail send.";
+    }
+    function changePassword(ChangePasswordValidation $req)
+    {
+        $req->validated();
+        $mail=$req->email;
+        $token=$req->otp;
+        $pass=Hash::make($req->password);
+        $data = DB::table('users')->where('email', $mail)->get();
+        $num = count($data);
+        
+        if($num>0)
+        {
+            foreach ($data as $key)
+            {
+                $token1 =$key->token;
+            }
+            if($token1==$token)
+            {
+                DB::table('users')->where('email', $mail)->update(['password'=> $pass]);
+                return response(['Message'=>'Password Updated : ']);
+            }
+            else{
+                return response(['Message'=>'Otp Does Not Match : ']);
+            }
+        }
+        else{
+            return response(['Message'=>'Please Enter Valid Mail : ']); 
+        }
+    }
+
+    function user_details_and_posts_details(Request $req)
+    {
+        $token = $req->token;
+        $data = DB::table('users')->where(['remember_token' => $token])->get();
+        $uid = $data[0]->u_id;
+        $check = count($data);
+
+        
+        if($check >0)
+        {
+            
+            $data = User::with(['AllUserPost', 'AllUsersPostComments'])->where('u_id', $uid)->get();
+            return response(['Message' => $data]);
+        }
+        else
+        {
+            return response(['Message' => 'Token not found orexpired...!!!!']);
+        }
     }
 }
