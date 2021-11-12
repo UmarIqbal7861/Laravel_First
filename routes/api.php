@@ -3,14 +3,15 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\usercontroller;
-use App\Http\Controllers\logincontroller;
-use App\Http\Controllers\verficontroller;
-use App\Http\Controllers\logoutcontroller;
-use App\Http\Controllers\addfriendcontroller;
-use App\Http\Controllers\updatecontroller;
-use App\Http\Controllers\post_controller;
-use App\Http\Controllers\comment_controller;
+//use App\Http\Controllers\SignUpController;
+use App\Http\Controllers\UserController;
+//use App\Http\Controllers\LoginController;
+//use App\Http\Controllers\VerificationController;
+//use App\Http\Controllers\LogoutController;
+use App\Http\Controllers\AddFriendController;
+use App\Http\Controllers\UpdateController;
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\CommentController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -26,24 +27,29 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('Signup',[usercontroller::class, 'sign_up']);
 
-Route::post('login',[logincontroller::class, 'login']);
+Route::post('Signup',[UserController::class, 'signUp']);
 
-Route::post('logout',[logoutcontroller::class, 'logout']);
+Route::post('login',[UserController::class, 'login']);
 
-Route::post('addfriend',[addfriendcontroller::class, 'add_friend']);
+Route::get('verfi/email/123/ver/{mail}/{token}',[UserController::class, 'Verification']);
 
-Route::post('update',[updatecontroller::class, 'update']);
 
-Route::post('post',[post_controller::class, 'post']);
+Route::group(['middleware'=>"checktoken"],function()
+{
+    Route::post('addfriend',[AddFriendController::class, 'add_friend']);
 
-Route::post('postupdate',[post_controller::class, 'postupdate']);
+    Route::post('update',[UserController::class, 'update']);
 
-Route::post('postdelete',[post_controller::class, 'postdelete']);
+    Route::post('post',[PostController::class, 'post']);
 
-Route::post('postread',[post_controller::class, 'read']);
+    Route::post('postupdate',[PostController::class, 'postupdate']);
 
-Route::get('verfi/email/123/ver/{mail}/{token}',[verficontroller::class, 'Verification']);
+    Route::post('postdelete',[PostController::class, 'postdelete']);
 
-Route::post('comment',[comment_controller::class, 'comment']);
+    Route::post('postread',[PostController::class, 'read']);
+
+    Route::post('comment',[CommentController::class, 'comment']);
+
+    Route::post('logout',[UserController::class, 'logout']);
+});

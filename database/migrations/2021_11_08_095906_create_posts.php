@@ -14,12 +14,12 @@ class CreatePosts extends Migration
     public function up()
     {
         Schema::create('posts', function (Blueprint $table) {
-            $table->id('P_id');
+            $table->id('p_id');
             $table->bigInteger('user_id')->unsigned();
             $table->string('file');
             $table->string('access');
             $table->timestamps();
-            $table->foreign('user_id')->references('U_id')->on('users');
+            $table->foreign('user_id')->references('u_id')->on('users');
         });
     }
 
