@@ -35,6 +35,7 @@ class PostController extends Controller
             return response(['Message'=>'Please login First!!']);
         }
     }
+    
     function postupdate(PostUpdateValidation $req)
     {
         $req->validated();
@@ -53,10 +54,8 @@ class PostController extends Controller
             else{
                 return response(['Message'=>'Not Allow to update any other person post']);
             }
-            
         }
     }
-
 
     function postdelete(PostDeleteValidation $req)
     {
@@ -90,6 +89,7 @@ class PostController extends Controller
             return false;
         }
     }
+
     function read(Request $req)
     {
         $data = DB::table('users')->where('remember_token', $req->token)->get();    //database querie
