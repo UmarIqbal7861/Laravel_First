@@ -98,16 +98,26 @@ class PostController extends Controller
         {
             $id2=$data[0]->u_id;
             $data=DB::table('posts')->where(['access'=>'public'])->get();    //access the public post
+            foreach($data as $key1)
+            {
+                $pid = $key1->p_id;
+                print_r ($key1);
+                $da=DB::table('comments')->where('post_id',$pid)->get();
+                print_r($da);
+            }
             $data2=DB::table('posts')->where(['access'=>'private'])->get();  //access the private post
             foreach($data2 as $key)
             {
                 $id = $key->user_id;
+                $pid = $key->p_id;
                 if($this->checkFriend($id2,$id))
                 {
                     print_r ($key);
+                    $da=DB::table('comments')->where('post_id',$pid)->get();
+                    print_r($da);
                 }
             }
-            return response([$data]);
+            //return response([$data]);
         }
         else{
             return response(['Message'=>'Please login First!!']);
