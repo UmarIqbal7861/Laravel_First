@@ -26,7 +26,7 @@
 						},
 						{
 							"key": "Email",
-							"value": "hamza@gmail.com",
+							"value": "hamza1@gmail.com",
 							"type": "text"
 						},
 						{
@@ -97,7 +97,7 @@
 					"formdata": [
 						{
 							"key": "Email",
-							"value": "Hamza@gmail.com",
+							"value": "Hamza1@gmail.com",
 							"type": "text"
 						},
 						{
@@ -259,7 +259,7 @@
 						},
 						{
 							"key": "email",
-							"value": "umar4042@gmail.com",
+							"value": "u4014258@gmail.com",
 							"type": "text"
 						}
 					],
@@ -749,6 +749,50 @@
 					"path": [
 						"api",
 						"userpostscomments"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "removefriend",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "token",
+							"value": "{{jwt}}",
+							"type": "text"
+						},
+						{
+							"key": "email",
+							"value": "u4014258@gmail.com",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8000/api/removefriend",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"removefriend"
 					]
 				}
 			},
