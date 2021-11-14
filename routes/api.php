@@ -45,6 +45,8 @@ Route::group(['middleware'=>"checktoken"],function()
 
     Route::post('addfriend',[AddFriendController::class, 'add_friend']);
 
+    Route::post('removefriend',[AddFriendController::class, 'removeFriend']);
+
     Route::post('post',[PostController::class, 'post']);
 
     Route::post('postupdate',[PostController::class, 'postupdate']);
