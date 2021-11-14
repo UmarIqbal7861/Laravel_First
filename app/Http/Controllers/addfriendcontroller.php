@@ -26,31 +26,26 @@ class AddFriendController extends Controller
             {
                 if($check1>0) //if condition check 2nd user exit or not
                 {   
-                    
                     $id2=$data1[0]->u_id;
                     if($id1==$id2)      //if condition check not add your self
                     {
                         return response(['Message'=>'You cannot add your self as friend.']);
                     }
-                    else
-                    {
+                    else{
                         $val=array('user1'=>$id1,'user2'=>$id2);
                         DB::table('friends')->insert($val);     //database querie
                         return response(['Message'=>'Friend Add']);
                     }
                 }
-                else
-                {
+                else{
                     return response(['Message'=>'Friend not Found']);
                 }
             }
-            else
-            {
+            else{
                 return response(['Message'=>'Friend not Found']);
             }
         }
-        else
-        {
+        else{
             return response(['Message'=>'Please login Account']);
         }
     }

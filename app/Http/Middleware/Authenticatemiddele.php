@@ -14,6 +14,10 @@ class Authenticatemiddele
      * @param  \Closure  $next
      * @return mixed
      */
+    /**
+     * handle function check jwt toke is valid or not
+     * if token is valid then proceed next request 
+     */
     public function handle(Request $request, Closure $next)
     {
         $data = DB::table('users')->where('remember_token', $request->token)->get();//check token database querie

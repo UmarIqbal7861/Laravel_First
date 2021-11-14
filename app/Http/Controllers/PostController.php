@@ -78,6 +78,9 @@ class PostController extends Controller
             }
         }
     }
+    /**
+     * checkFriend function check friend exists in friend list
+     */
     function checkFriend($itset,$friend_id){
         $r = DB::table('friends')->where('user1',$itset)->where('user2',$friend_id)->get();
         if (count($r) > 0){
@@ -94,8 +97,8 @@ class PostController extends Controller
         if($check>0)
         {
             $id2=$data[0]->u_id;
-            $data=DB::table('posts')->where(['access'=>'public'])->get();    //database querie
-            $data2=DB::table('posts')->where(['access'=>'private'])->get();
+            $data=DB::table('posts')->where(['access'=>'public'])->get();    //access the public post
+            $data2=DB::table('posts')->where(['access'=>'private'])->get();  //access the private post
             foreach($data2 as $key)
             {
                 $id = $key->user_id;

@@ -17,11 +17,13 @@ use App\Http\Controllers\CommentController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
 
-
+/**
+ * 
+ */
 Route::post('Signup',[UserController::class, 'signUp']);
 
 Route::post('login',[UserController::class, 'login']);
@@ -35,9 +37,13 @@ Route::get('verfi/email/123/ver/{mail}/{token}',[UserController::class, 'Verific
 
 Route::group(['middleware'=>"checktoken"],function()
 {
-    Route::post('addfriend',[AddFriendController::class, 'add_friend']);
-
     Route::post('update',[UserController::class, 'update']);
+
+    Route::post('logout',[UserController::class, 'logout']);
+
+    Route::post('userpostscomments', [UserController::class, 'user_details_and_posts_details']);
+
+    Route::post('addfriend',[AddFriendController::class, 'add_friend']);
 
     Route::post('post',[PostController::class, 'post']);
 
@@ -52,8 +58,4 @@ Route::group(['middleware'=>"checktoken"],function()
     Route::post('commentdelete',[CommentController::class, 'commentDelete']);
 
     Route::post('commentupdate',[CommentController::class, 'commentupdate']);
-
-    Route::post('logout',[UserController::class, 'logout']);
-
-    Route::post('userpostscomments', [UserController::class, 'user_details_and_posts_details']);
 });

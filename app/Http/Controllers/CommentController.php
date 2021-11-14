@@ -12,7 +12,10 @@ use App\Http\Requests\CommentUpdateValidation;
 class CommentController extends Controller
 {
     /**
-     * 
+     * this controller for use the comments table 
+     */
+    /**
+     * this controller create comment,update comment,delete comment
      */
     function comment(CommentValidation $req)
     {
@@ -51,8 +54,6 @@ class CommentController extends Controller
             
         }
     }
-
-
     function commentDelete(CommentDeleteValidation $req)
     {
         $req->validated();

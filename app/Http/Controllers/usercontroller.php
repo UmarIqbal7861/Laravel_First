@@ -39,7 +39,7 @@ class UserController extends Controller
         $userc->profile=$data;
         $userc->status=0;
         $userc->token=$token=rand(100,1000);
-        $result=$userc->save();     //database querie
+        $result=$userc->save();     //database query
         if($result){
             $mess=$this->sendMail($mail,$token);    //call send mail function 
             return response()->json(['Message' => 'Signup Register '. $mess],200);
@@ -62,12 +62,28 @@ class UserController extends Controller
         return "Mail send.";
     }
     /**
+     * this jwtToken generate the jwt toke and return jwt Token
+     */
+    function jwtToken()
+    {
+        $key = "umari4042";
+        $payload = array(
+            "iss" => "localhost",
+            "aud" => "users",
+            "iat" => time(),
+            "exp" => time()+1800,
+            "nbf" => 1357000000
+        );
+        $jwt = JWT::encode($payload, $key, 'HS256');
+        return $jwt;
+    }
+    /**
      * Verification function
      * check the user email valid is not through the email link
      */
     function Verification($mail,$token)
     {
-        $data=DB::table('users')->where('email', $mail)->where('token',$token)->get();     //database querie
+        $data=DB::table('users')->where('email', $mail)->where('token',$token)->get();     //database query
         $check=count($data);
         if($check <= 0)
         {
@@ -75,7 +91,7 @@ class UserController extends Controller
         }
         else{
             DB::table('users')->where('email', $mail)->update(['email_verified_at' => now()]);  //database querie
-            DB::table('users')->where('email', $mail)->update(['updated_at' => now()]); //database querie
+            DB::table('users')->where('email', $mail)->update(['updated_at' => now()]); //database query
             return response(['Message' => 'Your Account has been Verified.']);
         }
     }
@@ -109,29 +125,14 @@ class UserController extends Controller
                 {
                     return response(['Message'=>'You are already logged in..!']);                    
                 }
-                /**
-                 * this else generate the jwt toke and then store in $jwt and then store in data base
-                 */
-                else
-                {
-                    $key = "umari4042";
-                    $payload = array(
-                        "iss" => "localhost",
-                        "aud" => "users",
-                        "iat" => time(),
-                        "exp" => time()+1800,
-                        "nbf" => 1357000000
-                    );
-
-                    $jwt = JWT::encode($payload, $key, 'HS256');
-
-                    DB::table('users')->where('email', $user->email)->update(['remember_token'=> $jwt]);    //database queries
-                    DB::table('users')->where('email', $user->email)->update(['status'=> '1']);     //database queries
+                else{
+                    $jwt=$this->jwtToken();
+                    DB::table('users')->where('email', $user->email)->update(['remember_token'=> $jwt]);    //database query
+                    DB::table('users')->where('email', $user->email)->update(['status'=> '1']);     //database query
                     return response(['Message'=>'Now you are logged In','Access_Token'=>$jwt]);     //return response
                 }
             }
-            else
-            {
+            else{
                 return response(['Message'=>'Data does not exists']);                
             }
         }
@@ -164,7 +165,8 @@ class UserController extends Controller
         return response(['Message'=>'Logout']);
     }
     /**
-     * 
+     * forgetPassword function forget the password through otp 
+     * generate otp and send sendMailForgetPassword function 
      */
     function forgetPassword(ForgetValidation $req)
     {
@@ -208,6 +210,9 @@ class UserController extends Controller
         Mail::to($mail)->send(new sendmail($details));
         return "Mail send.";
     }
+    /**
+     * changePassword function change password if otp match
+     */
     function changePassword(ChangePasswordValidation $req)
     {
         $req->validated();
@@ -243,16 +248,12 @@ class UserController extends Controller
         $data = DB::table('users')->where(['remember_token' => $token])->get();
         $uid = $data[0]->u_id;
         $check = count($data);
-
-        
         if($check >0)
         {
-            
             $data = User::with(['AllUserPost', 'AllUsersPostComments'])->where('u_id', $uid)->get();
             return response(['Message' => $data]);
         }
-        else
-        {
+        else{
             return response(['Message' => 'Token not found orexpired...!!!!']);
         }
     }
