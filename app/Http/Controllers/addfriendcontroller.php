@@ -64,7 +64,6 @@ class AddFriendController extends Controller
             {   
                 $id2=$data1[0]->u_id;
                 $data3=DB::table('friends')->where(['user1'=> $id1 , 'user2' =>$id2])->delete();
-                //$conform=count($data3);
                 if($data3)
                 {
                     return response(['Message'=>'Friend Remove Conform']);

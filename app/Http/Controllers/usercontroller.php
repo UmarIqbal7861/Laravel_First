@@ -123,7 +123,9 @@ class UserController extends Controller
             {
                 if($status == 1)
                 {
-                    return response(['Message'=>'You are already logged in..!']);                    
+                    $jwt=$this->jwtToken();
+                    DB::table('users')->where('email', $user->email)->update(['remember_token'=> $jwt]); 
+                    return response(['Message'=>'You are already logged in..!','Access_Token'=>$jwt]);                    
                 }
                 else{
                     $jwt=$this->jwtToken();
