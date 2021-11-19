@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Http\Requests\PostValidation;
 use App\Http\Requests\PostUpdateValidation;
 use App\Http\Requests\PostDeleteValidation;
+use App\Http\Requests\SearchPostValidation;
 
 
 
