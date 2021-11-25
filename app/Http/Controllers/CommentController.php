@@ -23,7 +23,7 @@ class CommentController extends Controller
             $file=$req->file('file')->store('comment');    //store comment
             $value=array('user_id'=>$req->data->u_id,'post_id'=>$req->pid,'comment'=>$req->comment,'file'=>$file);
             DB::table('comments')->insert($value);       //database querie
-            return response()->json(["message" => "Comment Success"]);
+            return response()->json(["message" => "Comment Success"],200);
         }
         catch(\Exception $error)
         {
@@ -37,10 +37,10 @@ class CommentController extends Controller
             $check=DB::table('comments')->where(['c_id'=> $req->cid,'user_id'=>$req->data->u_id])->update(['comment'=>$req->comment,'file'=> $file]);    //database querie   //database querie 
             if($check)
             {
-                return response()->json(["message" => "Data Update"]);
+                return response()->json(["message" => "Data Update"],200);
             }
             else{
-                return response()->json(["message" => "Not Allow to Update any other person comment"]);
+                return response()->json(["message" => "Not Allow to Update any other person comment"],400);
             }   
         }
         catch(\Exception $error)
@@ -55,10 +55,10 @@ class CommentController extends Controller
             $check=DB::table('comments')->where(['c_id'=> $req->cid , 'user_id' =>$req->data->u_id])->delete(); //database querie
             if($check)
             {
-                return response()->json(['Message'=>'Data Delete']);
+                return response()->json(['Message'=>'Data Delete'],200);
             }
             else{
-                return response()->json(['Message'=>'Not Allow to Delet any other person post']);
+                return response()->json(['Message'=>'Not Allow to Delet any other person post'],400);
             }
         }
         catch(\Exception $error)

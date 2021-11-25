@@ -66,6 +66,8 @@ class Kernel extends HttpKernel
         'checktoken' => \App\Http\Middleware\Authenticatemiddele::class,
         'friend' => \App\Http\Middleware\FriendMiddleWare::class,
         'Signup' => \App\Http\Middleware\SignupMiddleware::class,
+        'login' => \App\Http\Middleware\LoginMiddleware::class,
+        
         
     ];
 }

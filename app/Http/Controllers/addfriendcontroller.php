@@ -19,7 +19,7 @@ class AddFriendController extends Controller
             $friend_id=$req->data['friend'];
             $val=array('user1'=>$user_id,'user2'=>$friend_id);
             DB::table('friends')->insert($val);     //database querie
-            return response()->json(["message" => "Friend Add."]);
+            return response()->json(["message" => "Friend Add."],200);
         }
         catch(\Exception $error)
         {
@@ -36,14 +36,14 @@ class AddFriendController extends Controller
                 $data=DB::table('friends')->where(['user1'=> $req->data->u_id , 'user2' =>$user2_id])->delete();
                 if($data)
                 {
-                    return response()->json(["message" => "Friend Remove Conform."]);
+                    return response()->json(["message" => "Friend Remove Conform."],200);
                 }
                 else{
-                    return response()->json(["message" => "You are not Friend This user "]);
+                    return response()->json(["message" => "You are not Friend This user "],400);
                 }
             }
             else{
-                return response()->json(["message" => "Account Not exists "]);
+                return response()->json(["message" => "Account Not exists "],404);
             }
         }
         catch(\Exception $error)

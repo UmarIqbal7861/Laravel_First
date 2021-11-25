@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Middleware;
-
+use Illuminate\Support\Facades\DB;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -25,6 +25,7 @@ class LoginMiddleware
                 $password = $users->password;
                 $status = $users->status;
                 $data=['password'=>$password,'status'=>$status];
+                
                 return $next($request->merge(["data"=>$data]));
             }
             else{

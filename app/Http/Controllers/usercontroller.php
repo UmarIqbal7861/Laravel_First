@@ -79,12 +79,12 @@ class UserController extends Controller
             //dd($data);   //database query
             if($data==null)
             {
-                return response()->json(['Message' => 'Your Email Not Correct.']);
+                return response()->json(['Message' => 'Your Email Not Correct.'],404);
             }
             else{
                 DB::table('users')->where('email', $mail)->update(['email_verified_at' => now()]);  //database querie
                 DB::table('users')->where('email', $mail)->update(['updated_at' => now()]); //database query
-                return response()->json(['Message' => 'Your Account has been Verified.']);
+                return response()->json(['Message' => 'Your Account has been Verified.'],200);
             }
         }
         catch(\Exception $error)
@@ -105,8 +105,8 @@ class UserController extends Controller
             $status = 0;
             $verfi=0;
             $user = new User;
-            $user->email = $req->input('Email');
-            $user->password = $req->input('Password');
+            $user->email = $req->input('email');
+            $user->password = $req->input('password');
             //$users = DB::table('users')->where('email', $user->email)->first();
             $password=$req->data['password'];
             $status=$req->data['status'];
@@ -116,17 +116,17 @@ class UserController extends Controller
                 {
                     $jwt=$this->jwtToken();
                     DB::table('users')->where('email', $user->email)->update(['remember_token'=> $jwt]); 
-                    return response()->json(['Message'=>'You are already logged in..!','Access_Token'=>$jwt]);                    
+                    return response()->json(['Message'=>'You are already logged in..!','Access_Token'=>$jwt],200);                    
                 }
                 else{
                     $jwt=$this->jwtToken();
                     DB::table('users')->where('email', $user->email)->update(['remember_token'=> $jwt]);    //database query
                     DB::table('users')->where('email', $user->email)->update(['status'=> '1']);     //database query
-                    return response()->json(['Message'=>'Now you are logged In','Access_Token'=>$jwt]);     //return response
+                    return response()->json(['Message'=>'Now you are logged In','Access_Token'=>$jwt],200);     //return response
                 }
             }
             else{
-                return response()->json(['Message'=>'Data does not exists']);                
+                return response()->json(['Message'=>'Data does not exists'],404);                
             }
         }
         catch(\Exception $error)
@@ -147,27 +147,26 @@ class UserController extends Controller
             if($req->name!=Null)
             {
                 DB::table('users')->where('remember_token', $req->token)->update(['name'=> $req->name]);
-                return response()->json(['Message'=>'Data Update']);
+                return response()->json(['Message'=>'Data Update'],200);
             }
             if($req->gender!=Null)
             {
                 DB::table('users')->where('remember_token', $req->token)->update(['gender'=> $req->gender]);
-                return response()->json(['Message'=>'Data Update']);
+                return response()->json(['Message'=>'Data Update'],200);
             }
             if($req->password!=Null)
             {
                 $pass=Hash::make($req->password);   //convert password in hash
                 DB::table('users')->where('remember_token', $req->token)->update(['password'=> $pass]);
-                return response()->json(['Message'=>'Data Update']);
+                return response()->json(['Message'=>'Data Update'],200);
             }
             if($req->file!=Null)
             {
                 $file=$req->file('file')->store('Profile_pic'); //store profile pic
                 $pass=Hash::make($req->password);   //convert password in hash
                 DB::table('users')->where('remember_token', $req->token)->update(['profile'=>$file]); //database querie
-                return response()->json(['Message'=>'Data Update']);
+                return response()->json(['Message'=>'Data Update'],200);
             }
-            return response()->json(['Message'=>'Data Update']);
         }
         catch(\Exception $error)
         {
@@ -184,7 +183,7 @@ class UserController extends Controller
         try{
             DB::table('users')->where('remember_token', $req->token)->update(['status'=> 0]);   //database querie
             DB::table('users')->where('remember_token', $req->token)->update(['remember_token'=> null]);    //database querie
-            return response()->json(['Message'=>'Logout']);
+            return response()->json(['Message'=>'Logout'],200);
         }
         catch(\Exception $error)
         {
@@ -213,11 +212,11 @@ class UserController extends Controller
                     return response($mess);
                 }
                 else{
-                    return response()->json(['Message'=>'User not Exists']);
+                    return response()->json(['Message'=>'User not Exists'],404);
                 }
             }
             else{
-                return response()->json(['Message'=>'User not Exists']);
+                return response()->json(['Message'=>'User not Exists'],404);
             }
         }
         catch(\Exception $error)
@@ -243,14 +242,14 @@ class UserController extends Controller
                 if($token1==$token)
                 {
                     DB::table('users')->where('email', $mail)->update(['password'=> $pass]);
-                    return response()->json(['Message'=>'Password Updated : ']);
+                    return response()->json(['Message'=>'Password Updated : '],200);
                 }
                 else{
-                    return response()->json(['Message'=>'Otp Does Not Match : ']);
+                    return response()->json(['Message'=>'Otp Does Not Match : '],404);
                 }
             }
             else{
-                return response()->json(['Message'=>'Please Enter Valid Mail : ']); 
+                return response()->json(['Message'=>'Please Enter Valid Mail : '],404); 
             }
         }
         catch(\Exception $error)
@@ -272,7 +271,7 @@ class UserController extends Controller
                 return new UserResource($data);
             }
             else{
-                return response()->json(['Message' => 'Token not found orexpired...!!!!']);
+                return response()->json(['Message' => 'Token not found orexpired...!!!!'],404);
             }
         }
         catch(\Exception $error)

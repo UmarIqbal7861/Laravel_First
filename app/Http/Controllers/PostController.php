@@ -26,7 +26,7 @@ class PostController extends Controller
             $file=$req->file('file')->store('post');    //store post
             $val=array('user_id'=>$req->data->u_id,'file'=>$file,'access'=>$req->access);
             DB::table('posts')->insert($val);       //database querie
-            return response()->json(['Message'=>'Post Success']);
+            return response()->json(['Message'=>'Post Success'],200);
         }catch(\Exception $error){
             return response()->json(['error'=>$error->getMessage()], 500);
         }
@@ -41,10 +41,10 @@ class PostController extends Controller
                 'access'=> $req->access,]);    //database querie   //database querie 
             if(!empty($data))
             {
-                return response()->json(['Message'=>'Data Update']);
+                return response()->json(['Message'=>'Data Update'],200);
             }
             else{
-                return response()->json(['Message'=>'Not Allow to update any other person post']);
+                return response()->json(['Message'=>'Not Allow to update any other person post'],400);
             }
         }
         catch(\Exception $error){
@@ -60,10 +60,10 @@ class PostController extends Controller
             $check=DB::table('posts')->where(['p_id'=>$req->pid,'user_id'=>$req->data->u_id])->delete(); //database querie
             if($check)
             {
-                return response()->json(['Message'=>'Data Delete']);
+                return response()->json(['Message'=>'Data Delete'],200);
             }
             else{
-                return response()->json(['Message'=>'Not Allow to Delete any other person post']);
+                return response()->json(['Message'=>'Not Allow to Delete any other person post'],400);
             }
         }
         catch(\Exception $error){
@@ -119,8 +119,22 @@ class PostController extends Controller
             return response()->json(['error'=>$error->getMessage()], 500);
         }
     }
-    function postsearch()
+    function postsearch(Request $req)
     {
-        
+        try{
+            $post_id=$req->pid;
+            $check=DB::table('posts')->where('p_id',$post_id)->where('user_id',$req->data->u_id)->get();
+            if(!empty($check))
+            {
+                return new PostResource($check);
+            }
+            else{
+                return response()->json(['Message'=>'Post not Found'],400);
+            }
+        }
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
+        }
     }
 }

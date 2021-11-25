@@ -15,7 +15,7 @@ class EmailService
     {
         $details=[
             'title'=> 'SignUp Verification',
-            'body'=> 'This Link use for login http://127.0.0.1:8000/api/verfi/email/123/ver/'.$send_mail.'/'.$token
+            'body'=> 'This Link use for login http://127.0.0.1:8000/user/verfi/email/123/ver/'.$send_mail.'/'.$token
         ];   
         dispatch(new SendEmailJob($send_mail,$details));
         return "Mail Send";

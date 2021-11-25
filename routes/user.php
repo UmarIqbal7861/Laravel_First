@@ -24,7 +24,7 @@ use App\Http\Controllers\UserController;
  */
 Route::post('Signup',[UserController::class, 'signUp'])->middleware('Signup');
 
-Route::post('login',[UserController::class, 'login']);
+Route::post('login',[UserController::class, 'login'])->middleware('login');
 
 Route::post('ForgetPasswordMail',[UserController::class, 'forgetPassword']);
 

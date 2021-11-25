@@ -30,4 +30,7 @@ Route::group(['middleware'=>"checktoken"],function()
     Route::post('postdelete',[PostController::class, 'postdelete']);
 
     Route::post('postread',[PostController::class, 'postread']);
+
+    Route::post('postsearch',[PostController::class, 'postsearch']);
+    
 });
