@@ -8,6 +8,7 @@ use App\Http\Requests\PostValidation;
 use App\Http\Requests\PostUpdateValidation;
 use App\Http\Requests\PostDeleteValidation;
 use App\Http\Requests\SearchPostValidation;
+use App\Http\Resources\PostResource;
 
 
 
@@ -21,107 +22,105 @@ class PostController extends Controller
      */
     function post(PostValidation $req)
     {
-        $req->validated();
-        $data = DB::table('users')->where('remember_token', $req->token)->get();
-        $check=count($data);
-        if($check>0)    //if condition check user is login in or not
-        {
-            $id1=$data[0]->u_id;
+        try{
             $file=$req->file('file')->store('post');    //store post
-            $val=array('user_id'=>$id1,'file'=>$file,'access'=>$req->access);
+            $val=array('user_id'=>$req->data->u_id,'file'=>$file,'access'=>$req->access);
             DB::table('posts')->insert($val);       //database querie
-            return response(['Message'=>'Post Success']);
+            return response()->json(['Message'=>'Post Success']);
+        }catch(\Exception $error){
+            return response()->json(['error'=>$error->getMessage()], 500);
         }
-        else{
-            return response(['Message'=>'Please login First!!']);
-        }
+        
     }
     
     function postupdate(PostUpdateValidation $req)
     {
-        $req->validated();
-        $data = DB::table('users')->where('remember_token', $req->token)->get();
-        $check=count($data);
-        if($check>0)    //if condition check user is login in or not
-        {
-            $id=$data[0]->u_id;
+        try{
             $file=$req->file('file')->store('post');    //store post
-            $ch=DB::table('posts')->where(['p_id'=> $req->pid,'user_id'=>$id])->update(['file'=> $file,
+            $data=DB::table('posts')->where(['p_id'=> $req->pid,'user_id'=>$req->data->u_id])->update(['file'=> $file,
                 'access'=> $req->access,]);    //database querie   //database querie 
-            if($ch)
+            if(!empty($data))
             {
-                return response(['Message'=>'Data Update']);
+                return response()->json(['Message'=>'Data Update']);
             }
             else{
-                return response(['Message'=>'Not Allow to update any other person post']);
+                return response()->json(['Message'=>'Not Allow to update any other person post']);
             }
         }
+        catch(\Exception $error){
+            return response()->json(['error'=>$error->getMessage()], 500);
+        }
+       
     }
 
     function postdelete(PostDeleteValidation $req)
     {
-
-        $req->validated();
-        $data = DB::table('users')->where('remember_token', $req->token)->get();
-        $check=count($data);
-        if($check>0)    //if condition check user is login in or not
-        {
-            $id=$data[0]->u_id;
-            DB::table('comments')->where(['p_id'=>$req->pid])->delete();
-            $ch=DB::table('posts')->where(['p_id'=>$req->pid,'user_id'=>$id])->delete(); //database querie
-            if($ch)
+        try{
+            DB::table('comments')->where(['post_id'=>$req->pid,'user_id'=>$req->data->u_id])->delete();
+            $check=DB::table('posts')->where(['p_id'=>$req->pid,'user_id'=>$req->data->u_id])->delete(); //database querie
+            if($check)
             {
-                return response(['Message'=>'Data Delete']);
+                return response()->json(['Message'=>'Data Delete']);
             }
             else{
-                return response(['Message'=>'Not Allow to Delete any other person post']);
+                return response()->json(['Message'=>'Not Allow to Delete any other person post']);
             }
         }
+        catch(\Exception $error){
+            return response()->json(['error'=>$error->getMessage()], 500);
+        }
+        
     }
     /**
      * checkFriend function check friend exists in friend list
      */
-    function checkFriend($itset,$friend_id){
-        $r = DB::table('friends')->where('user1',$itset)->where('user2',$friend_id)->get();
-        if (count($r) > 0){
-            return true;
+    function checkFriend($user,$friend_id){
+        try{
+            $check = DB::table('friends')->where('user1',$user)->where('user2',$friend_id)->get();
+            if (count($check) > 0){
+                return true;
+            }
+            else{
+                return false;
+            }
         }
-        else{
-            return false;
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
         }
     }
 
-    function read(Request $req)
+    function postread(Request $req)
     {
-        $data = DB::table('users')->where('remember_token', $req->token)->get();    //database querie
-        $check=count($data);    //if condition check user is login in or not
-        if($check>0)
-        {
-            $id2=$data[0]->u_id;
+        try{
             $data=DB::table('posts')->where(['access'=>'public'])->get();    //access the public post
-            foreach($data as $key1)
+            foreach($data as $key)
             {
-                $pid = $key1->p_id;
-                print_r ($key1);
-                $da=DB::table('comments')->where('post_id',$pid)->get();
-                print_r($da);
+                $pid = $key->p_id;
+                return new PostResource($key);
+                $check=DB::table('comments')->where('post_id',$pid)->get();
+                return new PostResource($check);
             }
-            $data2=DB::table('posts')->where(['access'=>'private'])->get();  //access the private post
-            foreach($data2 as $key)
+            $data=DB::table('posts')->where(['access'=>'private'])->get();  //access the private post
+            foreach($data as $key)
             {
                 $id = $key->user_id;
                 $pid = $key->p_id;
-                if($this->checkFriend($id2,$id))
+                if($this->checkFriend($req->data->u_id,$id))
                 {
-                    print_r ($key);
-                    $da=DB::table('comments')->where('post_id',$pid)->get();
-                    print_r($da);
+                    return new PostResource($key);
+                    $check=DB::table('comments')->where('post_id',$pid)->get();
+                    return new PostResource($check);
                 }
             }
-            //return response([$data]);
         }
-        else{
-            return response(['Message'=>'Please login First!!']);
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
         }
+    }
+    function postsearch()
+    {
+        
     }
 }

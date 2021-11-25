@@ -20,14 +20,13 @@ class Authenticatemiddele
      */
     public function handle(Request $request, Closure $next)
     {
-        $data = DB::table('users')->where('remember_token', $request->token)->get();//check token database querie
-        $check=count($data);
-        if($check>0)
+        $data = DB::table('users')->where('remember_token', $request->token)->first();//check token database querie
+        if(!empty($data))
         {
-            return $next($request);
+            return $next($request->merge(["data"=>$data]));
         }
         else{
-            return response(['Message'=>'You Are Logout']);
+            return response()->json(['Message'=>'You Are Logout']);
         }
     }
 }

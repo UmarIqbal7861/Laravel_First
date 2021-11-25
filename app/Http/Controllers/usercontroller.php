@@ -8,13 +8,17 @@ use App\Http\Requests\SignUpValidation;
 use App\Http\Requests\LogInValidation;
 use App\Http\Requests\ForgetValidation;
 use App\Http\Requests\ChangePasswordValidation;
+use App\Http\Resources\UserResource;
+use Illuminate\Support\Facades\Config;
 use App\Models\User;
 use App\Models\Post;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\sendmail;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
+
+use App\Jobs\SendEmailJob;
+use App\Services\jwtService;
+use App\Mail\QueueEmail;
+use App\Services\EmailService;
 
 
 class UserController extends Controller
@@ -27,55 +31,42 @@ class UserController extends Controller
      */
     function signUp(SignUpValidation $req)
     {
-        $req->validated();
-        $mail;
-        $userc = new User;
-        $userc->name=$req->input('Name');
-        $userc->email=$req->input('Email');
-        $mail=$req->input('Email');
-        $userc->password=Hash::make($req->input('Password'));   //convert password in hash
-        $userc->gender=$req->input('Gender');
-        $data=$req->file('Profile')->store('Profile_pic');  //store profile pic
-        $userc->profile=$data;
-        $userc->status=0;
-        $userc->token=$token=rand(100,1000);
-        $result=$userc->save();     //database query
-        if($result){
-            $mess=$this->sendMail($mail,$token);    //call send mail function 
-            return response()->json(['Message' => 'Signup Register '. $mess],200);
+        try{
+            $mail;
+            $userc = new User;
+            $userc->name=$req->input('name');
+            $userc->email=$req->input('email');
+            $mail=$req->input('email');
+            $userc->password=Hash::make($req->input('password'));   //convert password in hash
+            $userc->gender=$req->input('gender');
+            $data=$req->file('profile')->store('Profile_pic');  //store profile pic
+            $userc->profile=$data;
+            $userc->status=0;
+            $userc->token=$token=rand(100,1000);
+            $result=$userc->save();     //database query
+            if($result)
+            {
+                $mail_sender = new EmailService();
+                $mess= $mail_sender->sendMail($mail,$token);    //call send mail function 
+                return response()->json(['Message' => 'Signup Register '. $mess]);
+            }
+            else{
+                return response()->json(['Message'=>'Something went wrong..!!!'],400);
+            }
         }
-        else{
-            return response()->json(['Message'=>'Something went wrong..!!!'],400);
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
         }
     }
-    /**
-     * sendmail function 
-     * send mail with the link of verfiy link 
-     */
-    function sendMail($mail,$token)
-    {
-        $details=[
-            'title'=> 'SignUp Verification',
-            'body'=> 'This Link use for login http://127.0.0.1:8000/api/verfi/email/123/ver/'.$mail.'/'.$token
-        ]; 
-        Mail::to($mail)->send(new sendmail($details));
-        return "Mail send.";
-    }
+
     /**
      * this jwtToken generate the jwt toke and return jwt Token
      */
     function jwtToken()
     {
-        $key = "umari4042";
-        $payload = array(
-            "iss" => "localhost",
-            "aud" => "users",
-            "iat" => time(),
-            "exp" => time()+1800,
-            "nbf" => 1357000000
-        );
-        $jwt = JWT::encode($payload, $key, 'HS256');
-        return $jwt;
+        $jwt_conn = new jwtService();
+        return $jwt = $jwt_conn->get_jwt();
     }
     /**
      * Verification function
@@ -83,16 +74,22 @@ class UserController extends Controller
      */
     function Verification($mail,$token)
     {
-        $data=DB::table('users')->where('email', $mail)->where('token',$token)->get();     //database query
-        $check=count($data);
-        if($check <= 0)
-        {
-            return "Your Email not Correct";
+        try{
+            $data=DB::table('users')->where('email', $mail)->where('token',$token)->first();  
+            //dd($data);   //database query
+            if($data==null)
+            {
+                return response()->json(['Message' => 'Your Email Not Correct.']);
+            }
+            else{
+                DB::table('users')->where('email', $mail)->update(['email_verified_at' => now()]);  //database querie
+                DB::table('users')->where('email', $mail)->update(['updated_at' => now()]); //database query
+                return response()->json(['Message' => 'Your Account has been Verified.']);
+            }
         }
-        else{
-            DB::table('users')->where('email', $mail)->update(['email_verified_at' => now()]);  //database querie
-            DB::table('users')->where('email', $mail)->update(['updated_at' => now()]); //database query
-            return response(['Message' => 'Your Account has been Verified.']);
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
         }
     }
     /**
@@ -103,44 +100,40 @@ class UserController extends Controller
      */
     public function login(LogInValidation $req)
     {
-        $password = 0;
-        $status = 0;
-        $verfi=0;
-        $req->validated();
-        $user = new User;
-        $user->email = $req->input('Email');
-        $user->password = $req->input('Password');
-        $users = DB::table('users')->where('email', $user->email)->get();
-        foreach ($users as $key)
-        {
-            $password = $key->password;
-            $status = $key->status;
-            $verfi =$key->email_verified_at;
-        }
-        if(!empty($verfi))
-        {
+        try{
+            $password = 'null';
+            $status = 0;
+            $verfi=0;
+            $user = new User;
+            $user->email = $req->input('Email');
+            $user->password = $req->input('Password');
+            //$users = DB::table('users')->where('email', $user->email)->first();
+            $password=$req->data['password'];
+            $status=$req->data['status'];
             if(Hash::check($user->password,$password))
             {
                 if($status == 1)
                 {
                     $jwt=$this->jwtToken();
                     DB::table('users')->where('email', $user->email)->update(['remember_token'=> $jwt]); 
-                    return response(['Message'=>'You are already logged in..!','Access_Token'=>$jwt]);                    
+                    return response()->json(['Message'=>'You are already logged in..!','Access_Token'=>$jwt]);                    
                 }
                 else{
                     $jwt=$this->jwtToken();
                     DB::table('users')->where('email', $user->email)->update(['remember_token'=> $jwt]);    //database query
                     DB::table('users')->where('email', $user->email)->update(['status'=> '1']);     //database query
-                    return response(['Message'=>'Now you are logged In','Access_Token'=>$jwt]);     //return response
+                    return response()->json(['Message'=>'Now you are logged In','Access_Token'=>$jwt]);     //return response
                 }
             }
             else{
-                return response(['Message'=>'Data does not exists']);                
+                return response()->json(['Message'=>'Data does not exists']);                
             }
         }
-        else{
-            return response(['Message'=>'Your Email is not Verified. Please Verify your email first.']); 
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
         }
+        
     }
     /**
      * update function 
@@ -149,11 +142,37 @@ class UserController extends Controller
      */
     function update(Request $req)
     {
-        $file=$req->file('file')->store('Profile_pic'); //store profile pic
-        $pass=Hash::make($req->password);   //convert password in hash
-        DB::table('users')->where('remember_token', $req->token)->update(['name'=> $req->name,
-            'gender'=> $req->gender,'password'=> $pass,'profile'=>$file]); //database querie
-        return response(['Message'=>'Data Update']);
+        try{
+            $search=DB::table('users')->where('remember_token', $req->token)->first();
+            if($req->name!=Null)
+            {
+                DB::table('users')->where('remember_token', $req->token)->update(['name'=> $req->name]);
+                return response()->json(['Message'=>'Data Update']);
+            }
+            if($req->gender!=Null)
+            {
+                DB::table('users')->where('remember_token', $req->token)->update(['gender'=> $req->gender]);
+                return response()->json(['Message'=>'Data Update']);
+            }
+            if($req->password!=Null)
+            {
+                $pass=Hash::make($req->password);   //convert password in hash
+                DB::table('users')->where('remember_token', $req->token)->update(['password'=> $pass]);
+                return response()->json(['Message'=>'Data Update']);
+            }
+            if($req->file!=Null)
+            {
+                $file=$req->file('file')->store('Profile_pic'); //store profile pic
+                $pass=Hash::make($req->password);   //convert password in hash
+                DB::table('users')->where('remember_token', $req->token)->update(['profile'=>$file]); //database querie
+                return response()->json(['Message'=>'Data Update']);
+            }
+            return response()->json(['Message'=>'Data Update']);
+        }
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
+        }
     }
     /**
      * logout function 
@@ -162,9 +181,15 @@ class UserController extends Controller
      */
     function logout(Request $req)
     {
-        DB::table('users')->where('remember_token', $req->token)->update(['status'=> 0]);   //database querie
-        DB::table('users')->where('remember_token', $req->token)->update(['remember_token'=> null]);    //database querie
-        return response(['Message'=>'Logout']);
+        try{
+            DB::table('users')->where('remember_token', $req->token)->update(['status'=> 0]);   //database querie
+            DB::table('users')->where('remember_token', $req->token)->update(['remember_token'=> null]);    //database querie
+            return response()->json(['Message'=>'Logout']);
+        }
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
+        }
     }
     /**
      * forgetPassword function forget the password through otp 
@@ -172,91 +197,87 @@ class UserController extends Controller
      */
     function forgetPassword(ForgetValidation $req)
     {
-        $req->validated();
-        $mail=$req->email;
+        try{
+            $mail=$req->email;
+            $data = DB::table('users')->where('email', $mail)->first();
+            if(!empty($data))
+            {
 
-        $data = DB::table('users')->where('email', $mail)->get();
-        
-        $num = count($data);
-        
-        if($num>0)
-        {
-            foreach ($data as $key)
-            {
-                $verfi =$key->email_verified_at;
-            }
-            if(!empty($verfi))
-            {
-                $otp=rand(1000,9999);
-                DB::table('users')->where('email', $mail)->update(['token'=> $otp]);
-                return response($this->sendMailForgetPassword($mail,$otp));
+                $verfi =$data->email_verified_at;
+                if(!empty($verfi))
+                {
+                    $otp=rand(1000,9999);
+                    DB::table('users')->where('email', $mail)->update(['token'=> $otp]);
+                    $mail_sender = new EmailService();
+                    $mess= $mail_sender->sendMailForgetPassword($mail,$otp);  
+                    return response($mess);
+                }
+                else{
+                    return response()->json(['Message'=>'User not Exists']);
+                }
             }
             else{
-                return response(['Message'=>'User not Exists']);
+                return response()->json(['Message'=>'User not Exists']);
             }
         }
-        else{
-            return response(['Message'=>'User not Exists']);
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
         }
     }
-    /**
-     * sendmail function 
-     * send mail with the link of for forget the password 
-     */
-    function sendMailForgetPassword($mail,$otp)
-    {
-        $details=[
-            'title'=> 'Forget Password Verification',
-            'body'=> 'Your OTP is '. $otp . ' Please copy and paste the change Password Api'
-        ]; 
-        Mail::to($mail)->send(new sendmail($details));
-        return "Mail send.";
-    }
+
     /**
      * changePassword function change password if otp match
      */
     function changePassword(ChangePasswordValidation $req)
     {
-        $req->validated();
-        $mail=$req->email;
-        $token=$req->otp;
-        $pass=Hash::make($req->password);
-        $data = DB::table('users')->where('email', $mail)->get();
-        $num = count($data);
-        
-        if($num>0)
-        {
-            foreach ($data as $key)
+        try{
+            $mail=$req->email;
+            $token=$req->otp;
+            $pass=Hash::make($req->password);
+            $data = DB::table('users')->where('email', $mail)->first();
+            if(!empty($data))
             {
-                $token1 =$key->token;
-            }
-            if($token1==$token)
-            {
-                DB::table('users')->where('email', $mail)->update(['password'=> $pass]);
-                return response(['Message'=>'Password Updated : ']);
+                $token1 =$data->token;
+
+                if($token1==$token)
+                {
+                    DB::table('users')->where('email', $mail)->update(['password'=> $pass]);
+                    return response()->json(['Message'=>'Password Updated : ']);
+                }
+                else{
+                    return response()->json(['Message'=>'Otp Does Not Match : ']);
+                }
             }
             else{
-                return response(['Message'=>'Otp Does Not Match : ']);
+                return response()->json(['Message'=>'Please Enter Valid Mail : ']); 
             }
         }
-        else{
-            return response(['Message'=>'Please Enter Valid Mail : ']); 
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
         }
     }
 
     function user_details_and_posts_details(Request $req)
     {
-        $token = $req->token;
-        $data = DB::table('users')->where(['remember_token' => $token])->get();
-        $uid = $data[0]->u_id;
-        $check = count($data);
-        if($check >0)
-        {
-            $data = User::with(['AllUserPost', 'AllUsersPostComments'])->where('u_id', $uid)->get();
-            return response(['Message' => $data]);
+        try{
+            $token = $req->token;
+            $data = DB::table('users')->where(['remember_token' => $token])->get();
+            $uid = $data[0]->u_id;
+            $check = count($data);
+            if($check >0)
+            {
+                $data = User::with(['AllUserPost', 'AllUsersPostComments'])->where('u_id', $uid)->get();
+                return new UserResource($data);
+            }
+            else{
+                return response()->json(['Message' => 'Token not found orexpired...!!!!']);
+            }
         }
-        else{
-            return response(['Message' => 'Token not found orexpired...!!!!']);
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
         }
     }
 }

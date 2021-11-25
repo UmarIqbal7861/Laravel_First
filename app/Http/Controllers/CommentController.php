@@ -19,57 +19,51 @@ class CommentController extends Controller
      */
     function comment(CommentValidation $req)
     {
-        $req->validated();
-        $data = DB::table('users')->where('remember_token', $req->token)->get();
-        $check=count($data);
-        if($check>0)    //if condition check user is login in or not
-        {
-            $id1=$data[0]->u_id;
+        try{
             $file=$req->file('file')->store('comment');    //store comment
-            $val=array('user_id'=>$id1,'post_id'=>$req->pid,'comment'=>$req->comment,'file'=>$file);
-            DB::table('comments')->insert($val);       //database querie
-            return response(['Message'=>'Comment Success']);
+            $value=array('user_id'=>$req->data->u_id,'post_id'=>$req->pid,'comment'=>$req->comment,'file'=>$file);
+            DB::table('comments')->insert($value);       //database querie
+            return response()->json(["message" => "Comment Success"]);
         }
-        else{
-            return response(['Message'=>'Please login First!!']);
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
         }
     }
     function commentupdate(CommentUpdateValidation $req)
     {
-        $req->validated();
-        $data = DB::table('users')->where('remember_token', $req->token)->get();
-        $check=count($data);
-        if($check>0)    //if condition check user is login in or not
-        {
-            $id=$data[0]->u_id;
+        try{
             $file=$req->file('file')->store('comment');    //store comment
-            $ch=DB::table('comments')->where(['c_id'=> $req->cid,'user_id'=>$id])->update(['comment'=>$req->comment,'file'=> $file]);    //database querie   //database querie 
-            if($ch)
+            $check=DB::table('comments')->where(['c_id'=> $req->cid,'user_id'=>$req->data->u_id])->update(['comment'=>$req->comment,'file'=> $file]);    //database querie   //database querie 
+            if($check)
             {
-                return response(['Message'=>'Data Update']);
+                return response()->json(["message" => "Data Update"]);
             }
             else{
-                return response(['Message'=>'Not Allow to Update any other person comment']);
-            }
-            
+                return response()->json(["message" => "Not Allow to Update any other person comment"]);
+            }   
         }
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
+        }
+        
     }
     function commentDelete(CommentDeleteValidation $req)
     {
-        $req->validated();
-        $data = DB::table('users')->where('remember_token', $req->token)->get();
-        $check=count($data);
-        if($check>0)    //if condition check user is login in or not
-        {
-            $id=$data[0]->u_id;
-            $ch=DB::table('comments')->where(['c_id'=> $req->cid , 'user_id' =>$id])->delete(); //database querie
-            if($ch)
+        try{
+            $check=DB::table('comments')->where(['c_id'=> $req->cid , 'user_id' =>$req->data->u_id])->delete(); //database querie
+            if($check)
             {
-                return response(['Message'=>'Data Update']);
+                return response()->json(['Message'=>'Data Delete']);
             }
             else{
-                return response(['Message'=>'Not Allow to Delet any other person post']);
+                return response()->json(['Message'=>'Not Allow to Delet any other person post']);
             }
+        }
+        catch(\Exception $error)
+        {
+            return response()->json(['error'=>$error->getMessage()], 500);
         }
     }
 }
