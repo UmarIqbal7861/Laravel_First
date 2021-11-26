@@ -33,17 +33,17 @@ class UserController extends Controller
     {
         try{
             $mail;
-            $userc = new User;
-            $userc->name=$req->input('name');
-            $userc->email=$req->input('email');
+            $user = new User;
+            $user->name=$req->input('name');
+            $user->email=$req->input('email');
             $mail=$req->input('email');
-            $userc->password=Hash::make($req->input('password'));   //convert password in hash
-            $userc->gender=$req->input('gender');
+            $user->password=Hash::make($req->input('password'));   //convert password in hash
+            $user->gender=$req->input('gender');
             $data=$req->file('profile')->store('Profile_pic');  //store profile pic
-            $userc->profile=$data;
-            $userc->status=0;
-            $userc->token=$token=rand(100,1000);
-            $result=$userc->save();     //database query
+            $user->profile=$data;
+            $user->status=0;
+            $user->token=$token=rand(100,1000);
+            $result=$user->save();     //database query
             if($result)
             {
                 $mail_sender = new EmailService();
